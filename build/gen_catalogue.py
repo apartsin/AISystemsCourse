@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Build the HIT course-catalogue package for Modern AI Systems by cloning the
+"""Build the HIT course-catalogue package (Engineering of AI Systems) by cloning the
 DLCourseHIT reference .docx templates (preserving the official HIT letterhead
 header, styles, and fonts) and replacing the body with this course's content.
 Outputs: hit-catalogue/{syllabus_en,syllabus_he,rationale,catalogue_summary}.docx
@@ -25,14 +25,26 @@ def clear_body(doc):
         body.remove(child)
 
 def _set_rtl(p, rtl):
+    if not rtl:
+        return
     pPr = p._p.get_or_add_pPr()
-    if rtl:
-        if pPr.find(qn('w:bidi')) is None:
-            pPr.append(OxmlElement('w:bidi'))
-        for run in p.runs:
-            rPr = run._r.get_or_add_rPr()
-            if rPr.find(qn('w:rtl')) is None:
-                rPr.append(OxmlElement('w:rtl'))
+    # w:bidi MUST precede w:jc in the CT_PPr schema, or Word ignores RTL base
+    # direction and renders the paragraph left-to-right (scrambling mixed text).
+    if pPr.find(qn('w:bidi')) is None:
+        bidi = OxmlElement('w:bidi')
+        jc = pPr.find(qn('w:jc'))
+        if jc is not None:
+            jc.addprevious(bidi)
+        else:
+            pStyle = pPr.find(qn('w:pStyle'))
+            if pStyle is not None:
+                pStyle.addnext(bidi)
+            else:
+                pPr.insert(0, bidi)
+    for run in p.runs:
+        rPr = run._r.get_or_add_rPr()
+        if rPr.find(qn('w:rtl')) is None:
+            rPr.append(OxmlElement('w:rtl'))
 
 def para(doc, text, style=None, rtl=False, align=None, bold=False, size=None):
     p = doc.add_paragraph(style=style) if style else doc.add_paragraph()
@@ -54,7 +66,12 @@ def weekly_table(doc, header, rows, rtl=False):
     if rtl:
         tblPr = t._tbl.tblPr
         if tblPr.find(qn('w:bidiVisual')) is None:
-            tblPr.append(OxmlElement('w:bidiVisual'))
+            bidi = OxmlElement('w:bidiVisual')
+            tblStyle = tblPr.find(qn('w:tblStyle'))
+            if tblStyle is not None:   # bidiVisual must follow tblStyle, precede tblW/jc
+                tblStyle.addnext(bidi)
+            else:
+                tblPr.insert(0, bidi)
     hc = t.rows[0].cells
     for i, htxt in enumerate(header):
         hc[i].text = ""
