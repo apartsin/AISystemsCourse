@@ -56,8 +56,11 @@ def para(doc, text, style=None, rtl=False, align=None, bold=False, size=None):
     return p
 
 def heading(doc, text, rtl=False):
+    # RTL: justify (w:jc 'both'), matching the HIT template. In a bidi paragraph
+    # 'right' can map to the logical end (physical left) for styled paragraphs;
+    # 'both' always starts at the reading edge (the right), so headers hug right.
     p = para(doc, text, style='Heading 1', rtl=rtl,
-             align=WD_ALIGN_PARAGRAPH.RIGHT if rtl else WD_ALIGN_PARAGRAPH.LEFT)
+             align=WD_ALIGN_PARAGRAPH.JUSTIFY if rtl else WD_ALIGN_PARAGRAPH.LEFT)
     return p
 
 def weekly_table(doc, header, rows, rtl=False):
@@ -77,14 +80,14 @@ def weekly_table(doc, header, rows, rtl=False):
         hc[i].text = ""
         pr = hc[i].paragraphs[0]
         r = pr.add_run(htxt); r.bold = True
-        if rtl: pr.alignment = WD_ALIGN_PARAGRAPH.RIGHT; _set_rtl(pr, True)
+        if rtl: pr.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY; _set_rtl(pr, True)
     for wk, subj in rows:
         c = t.add_row().cells
         c[0].text = wk
         c[1].text = subj
         for cell in c:
             pp = cell.paragraphs[0]
-            if rtl: pp.alignment = WD_ALIGN_PARAGRAPH.RIGHT; _set_rtl(pp, True)
+            if rtl: pp.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY; _set_rtl(pp, True)
     return t
 
 # ---------- shared content ----------
@@ -172,7 +175,7 @@ def build_syllabus_en():
 def build_syllabus_he():
     d = Document(os.path.join(REF, "syllabus_he.docx"))
     clear_body(d)
-    R = WD_ALIGN_PARAGRAPH.RIGHT
+    R = WD_ALIGN_PARAGRAPH.JUSTIFY  # RTL paragraphs justify (hug right reading-edge); never 'right'
     para(d, TITLE_HE + " - " + TITLE_EN, rtl=True, align=R, bold=True, size=14)
     para(d, "DevOps, DataOps, MLOps, LLMOps, AgentOps", align=WD_ALIGN_PARAGRAPH.LEFT)
     para(d, "אופן הוראה: שיעור ותרגול.", rtl=True, align=R)
@@ -211,7 +214,7 @@ def build_syllabus_he():
 def build_rationale():
     d = Document(os.path.join(REF, "rationale.docx"))
     clear_body(d)
-    R = WD_ALIGN_PARAGRAPH.RIGHT
+    R = WD_ALIGN_PARAGRAPH.JUSTIFY  # RTL paragraphs justify (hug right reading-edge); never 'right'
     para(d, "מסמך רציונל לקורס הנדסת מערכות בינה מלאכותית", rtl=True, align=R, bold=True, size=14)
     para(d, TITLE_EN, align=WD_ALIGN_PARAGRAPH.LEFT, bold=True)
     para(d, "הקורס עוסק בהנדסה, בפריסה, בניטור, בממשל ובתפעול של מערכות תוכנה מבוססות בינה מלאכותית בייצור. הוא מקיף חמש שכבות תפעול: DevOps, DataOps, MLOps, LLMOps ו-AgentOps, ומקנה בסיס מעשי לבניית מערכת מקצה לקצה הכוללת ענן, צינורות נתונים, הגשת מודלים, יכולת מבוססת מודל שפה וסוכן, ונצפות וממשל לאורך כולה.", rtl=True, align=R)
@@ -226,7 +229,7 @@ def build_rationale():
 def build_catalogue_summary():
     d = Document(os.path.join(REF, "catalogue_summary.docx"))
     clear_body(d)
-    R = WD_ALIGN_PARAGRAPH.RIGHT; L = WD_ALIGN_PARAGRAPH.LEFT
+    R = WD_ALIGN_PARAGRAPH.JUSTIFY; L = WD_ALIGN_PARAGRAPH.LEFT  # R=justify for RTL
     para(d, "תקצירים לידיעון", rtl=True, align=R, bold=True, size=14)
     para(d, TITLE_HE, rtl=True, align=R, bold=True)
     para(d, TITLE_EN, align=L)
